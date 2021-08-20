@@ -1,0 +1,9 @@
+bucket:
+  endpoint:
+  access_key_env: YH__BUCKET_ACCESS_KEY
+  secret_key_env: YH__BUCKET_SECRET_KEY
+
+minio:
+  endpoint: 127.0.0.1:9003
+  access_key_env: YH__MINIO_ACCESS_KEY
+  secret_key_env: YH__MINIO_SECRET_KEY

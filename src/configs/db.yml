@@ -1,0 +1,34 @@
+mart:
+  driver: postgres
+  host: 127.0.0.1
+  port: 5432
+  user: root
+  password_env: YH__MART_PASSWORD
+  database: mart
+  schema: public
+
+backend:
+  driver: mysql
+  host: 127.0.0.1
+  port: 3306
+  user: root
+  password_env: YH__BACKEND_PASSWORD
+  database: public
+
+origin:
+  driver: oracle
+  host: 127.0.0.1
+  port: 1525
+  user: root
+  password_env: YH__ORIGIN_PASSWORD
+  database: PUBLIC
+  dns_tns: >
+    (DESCRIPTION =
+        (ADDRESS_LIST =
+          (ADDRESS = (PROTOCOL = TCP)(HOST = 127.0.0.1)(PORT = 1525))
+        )
+        (CONNECT_DATA =
+          (SERVER = DEDICATED)
+          (SERVICE_NAME = PUBLIC)
+        )
+      )
