@@ -1,19 +1,19 @@
 bucket:
   endpoint: 127.0.0.1:9003
+  bucket_name: bucket
   access_key:
   access_key_env: YH__BUCKET_ACCESS_KEY
   access_key_file:
   secret_key:
   secret_key_env: YH__BUCKET_SECRET_KEY
   secret_key_file:
-  bucket_name: bucket
 
 minio:
   endpoint: 127.0.0.1:9003
+  bucket_name: minio
   access_key:
   access_key_env: YH__MINIO_ACCESS_KEY
   access_key_file:
   secret_key:
   secret_key_env: YH__MINIO_SECRET_KEY
   secret_key_file:
-  bucket_name: minio

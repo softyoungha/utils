@@ -516,7 +516,7 @@ def change_date_format(date_str: str, as_is: str = '%Y%m%d', to_be: str = '%Y-%m
     return datetime.strptime(date_str, as_is).strftime(to_be)
 
 
-def as_date(standard_date: Union[str, datetime, date], as_datetime=True) -> Union[datetime, date]:
+def as_date(standard_date: Union[str, datetime, date], as_datetime: bool = True) -> Union[datetime, date]:
     """
     string, datetime, date -> date or datetime
     """
@@ -557,7 +557,7 @@ def as_date(standard_date: Union[str, datetime, date], as_datetime=True) -> Unio
         raise TypeError("standard_date must be one of 'str' or 'datetime.datetime'")
 
 
-def is_date(text: Any, fmt='%Y-%m-%d') -> bool:
+def is_date(text: Any, fmt: str = '%Y-%m-%d') -> bool:
     """
     date 형식인지 체크
     """
