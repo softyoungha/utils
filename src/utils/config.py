@@ -33,10 +33,17 @@ class Default:
 
     DaskNPartition = 32
 
+    # 기본 S3 profile
+    BucketProfile = 'bucket'
+
+    # 기본 사용 Redis profile
+    RedisProfile = 'cache'
+
 
 # 프로젝트 내에서 사용하는 모든 환경변수의 prefix
 ENV_PREFIX = 'YH__'
 
+# get_env + prefix
 _get_env = lambda name, default: get_env(name, default=default, prefix=ENV_PREFIX)
 
 
@@ -49,6 +56,7 @@ class Paths:
     LOG = _get_env('LOG_PATH', default='/log')
     CONFIG = _get_env('CONFIG_PATH', default=f'{SOURCE}/configs')
 
+
 # parse
 ENV = get_env('ENV', default='DEV', prefix=ENV_PREFIX)
 
@@ -56,12 +64,15 @@ ENV = get_env('ENV', default='DEV', prefix=ENV_PREFIX)
 if ENV == 'DEV':
     DB_CONFIG = load_yaml(path_join(Paths.CONFIG, 'db.yml'))
     REDIS_CONFIG = load_yaml(path_join(Paths.CONFIG, 'redis.yml'))
-    S3_CONFIG = load_yaml(path_join(Paths.CONFIG, 's3.yml'))
+    BUCKET_CONFIG = load_yaml(path_join(Paths.CONFIG, 'bucket.yml'))
+    API_CONFIG = load_yaml(path_join(Paths.CONFIG, 'api.yml'))
 
 elif ENV == 'PRD':
     DB_CONFIG = load_yaml(path_join(Paths.CONFIG, 'db.prod.yml'))
     REDIS_CONFIG = load_yaml(path_join(Paths.CONFIG, 'redis.prod.yml'))
-    S3_CONFIG = load_yaml(path_join(Paths.CONFIG, 's3.prod.yml'))
+    BUCKET_CONFIG = load_yaml(path_join(Paths.CONFIG, 'bucket.prod.yml'))
+    API_CONFIG = load_yaml(path_join(Paths.CONFIG, 'api.prod.yml'))
 
 else:
-    assert ENV in ('DEV', 'PRD'), "set MARS__ENV(windows) / export MARS__ENV(linux)"
+    assert ENV in ('DEV', 'PRD'), "set ENV(windows) / export ENV(linux)"
+

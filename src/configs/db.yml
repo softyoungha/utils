@@ -3,7 +3,9 @@ mart:
   host: 127.0.0.1
   port: 5432
   user: root
+  password:
   password_env: YH__MART_PASSWORD
+  password_file:
   database: mart
   schema: public
 
@@ -12,7 +14,9 @@ backend:
   host: 127.0.0.1
   port: 3306
   user: root
+  password:
   password_env: YH__BACKEND_PASSWORD
+  password_file:
   database: public
 
 origin:
@@ -20,7 +24,9 @@ origin:
   host: 127.0.0.1
   port: 1525
   user: root
+  password:
   password_env: YH__ORIGIN_PASSWORD
+  password_file:
   database: PUBLIC
   dns_tns: >
     (DESCRIPTION =

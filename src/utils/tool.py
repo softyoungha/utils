@@ -306,7 +306,6 @@ def to_file(obj: Any,
     """
     import logging
 
-    from .const import IOEngine, FileFormat
     from .config import Default
 
     if isinstance(target, StringIO):
@@ -579,6 +578,46 @@ def get_env(var: str, default: str = None, prefix: str = None):
     환경변수 parsing
     """
     return os.getenv(prefix + var) or default
+
+
+def get_secret(secret: str = None,
+               secret_env: str = None,
+               secret_file: str = None) -> str:
+    """
+    평문으로 저장할 수 없는 secret 값 parse
+    직접 입력 / 환경변수 / 파일 세가지 중 하나 선택
+
+    :param secret: 직접 입력시 secret 값 direct로 사용
+    :param secret_env: secret 값을 가지고 있는 환경변수명
+    :param secret_file: secret 값을 가지고 있는 file path
+    :return: secret
+    """
+    assert secret is not None or secret_env is not None or secret_file is not None
+
+    if secret:
+        pass
+
+    elif secret_env:
+
+        # get env
+        secret = get_env(secret_env, prefix=None)
+
+        # assertion
+        assert secret is not None, f"해당 환경 변수가 없습니다: {secret_env}"
+
+    elif secret_file:
+
+        try:
+            secret = read_text(secret_file, multilines=False)
+
+        except FileNotFoundError as e:
+            print(f"해당 파일이 존재하지 않습니다: {secret_file}")
+            raise e
+
+        except Exception as e:
+            raise e
+
+    return secret
 
 
 def generate_fernet_key(save: bool = False, save_path: str = None) -> bytes:
@@ -869,3 +908,35 @@ def sql2python(item):
         return float(item)
     else:
         return item
+
+
+def get_bucket_config(profile_name: str):
+    from .config import BUCKET_CONFIG
+
+    # get s3_config
+    s3_config = BUCKET_CONFIG.get(profile_name, None)
+
+    if s3_config is None:
+        raise KeyError(f"해당 profile_name이 없습니다: {profile_name}")
+
+    # get endpoint
+    endpoint = s3_config.get(AwsConn.ENDPOINT)
+
+    assert endpoint is not None, f"endpoint가 설정되어야 합니다"
+
+    # get bucket_name
+    bucket_name = s3_config.get(AwsConn.BUCKET_NAME)
+
+    assert bucket_name is not None, f"bucket_name이 설정되어야 합니다"
+
+    # get access_key
+    access_key = get_secret(s3_config.get(AwsConn.ACCESS_KEY),
+                            s3_config.get(AwsConn.ACCESS_KEY_ENV),
+                            s3_config.get(AwsConn.ACCESS_KEY_FILE))
+
+    # get secret_key
+    secret_key = get_secret(s3_config.get(AwsConn.SECRET_KEY),
+                            s3_config.get(AwsConn.SECRET_KEY_ENV),
+                            s3_config.get(AwsConn.SECRET_KEY_FILE))
+
+    return endpoint, bucket_name, access_key, secret_key

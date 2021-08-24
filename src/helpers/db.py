@@ -18,6 +18,7 @@ from contextlib import contextmanager
 
 from utils.config import Default
 from utils.const import *
+from utils.tool import get_secret
 
 
 class DbObj:
@@ -46,20 +47,18 @@ class DbObj:
     @property
     def db_config(self) -> dict:
         from utils.config import DB_CONFIG
-        from utils.tool import get_env
         
         # get config by profile name
-        db_config = DB_CONFIG[self.profile_name]
+        db_config = DB_CONFIG(self.profile_name)
 
-        # get password env variable 
-        password_env = db_config.get(DbConn.PASSWORD_ENV)
-        
-        # get env
-        password = get_env(password_env, prefix=None)
-        
-        # assertion
-        assert password is not None, f"해당 환경 변수가 없습니다: {password_env}"
-        
+        if db_config is None:
+            raise KeyError(f"해당 profile_name을 찾을 수 없습니다: {self.profile_name}")
+
+        # get password
+        password = get_secret(db_config.get(DbConn.PASSWORD),
+                              db_config.get(DbConn.PASSWORD_ENV),
+                              db_config.get(DbConn.PASSWORD_FILE))
+
         # db_config에 password 추가
         db_config.update({DbConn.PASSWORD: password})
         

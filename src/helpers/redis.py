@@ -1,5 +1,5 @@
 import redis
-from utils.config import REDIS_CONFIG
+from utils.config import REDIS_CONFIG, Default
 
 
 class Redis(redis.StrictRedis):
@@ -24,7 +24,13 @@ class Redis(redis.StrictRedis):
                          decode_responses=decode_responses)
 
 
-class MarsRedis(Redis):
-    def __init__(self):
-        super().__init__(**REDIS_CONFIG)
+def rc(profile_name: str) -> Redis:
+    if profile_name is None:
+        profile_name = Default.RedisProfile
 
+    redis_config = REDIS_CONFIG.get(profile_name)
+
+    if redis_config is None:
+        raise KeyError(f"해당 profile_name을 찾을 수 없습니다: {profile_name}")
+
+    return Redis(**REDIS_CONFIG.get(profile_name))

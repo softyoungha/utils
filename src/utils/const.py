@@ -9,6 +9,7 @@
 ########################################################################################################################
 """
 
+
 class IOEngine:
     pandas = 'pandas'
     dask = 'dask'
@@ -80,6 +81,7 @@ class DbConn:
     USER = 'user'
     PASSWORD = 'password'
     PASSWORD_ENV = 'password_env'
+    PASSWORD_FILE = 'password_file'
     DATABASE = 'database'
     DRIVER = 'driver'
     SCHEMA = 'schema'
@@ -103,3 +105,19 @@ class RedisConn:
     PASSWORD = 'password'
     PASSWORD_ENV = 'password_env'
 
+
+class AwsConn:
+    ENDPOINT = 'endpoint'
+    ACCESS_KEY = 'access_key'
+    ACCESS_KEY_ENV = 'access_key_env'
+    ACCESS_KEY_FILE = 'access_key_file'
+    SECRET_KEY = 'secret_key'
+    SECRET_KEY_ENV = 'secret_key_env'
+    SECRET_KEY_FILE = 'secret_key_file'
+    BUCKET_NAME = 'bucket_name'
+
+
+class ApiConn:
+    ENDPOINT = 'endpoint'
+    DEFAULT_HEADERS = 'default_headers'
+    DEFAULT_COOKIES = 'default_cookies'
