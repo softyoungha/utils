@@ -1,0 +1,89 @@
+version: '3.7'
+
+services:
+  master:
+    image: bitnami/redis:6.0.10
+    hostname: redis
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.data==true
+          - node.labels.number==1
+    ports:
+      - "6379:6379"
+    volumes:
+      - /data/redis/master:/bitnami/redis/data
+      - /etc/localtime:/etc/localtime:ro
+    secrets:
+      - redis_password
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
+      - TZ=Asia/Seoul
+    networks:
+      - db_net
+
+  slave:
+    image: bitnami/redis:6.0.10
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.data==true
+          - node.labels.number==2
+    ports:
+      - "6380:6379"
+    volumes:
+      - /data/redis/slave:/bitnami/redis/data
+      - /etc/localtime:/etc/localtime:ro
+    secrets:
+      - redis_password
+    environment:
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=master
+      - REDIS_MASTER_PORT_NUMBER=6379
+      - REDIS_MASTER_PASSWORD_FILE=/run/secrets/redis_password
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
+      - TZ=Asia/Seoul
+    networks:
+      - db_net
+    depends_on:
+      - master
+
+  commandar:
+    image: ${NEXUS_IP}/rediscommander/redis-commander:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        delay: 10s
+        max_attempts: 10
+        window: 60s
+      placement:
+        constraints:
+          - node.labels.data==true
+        preferences:
+          - spread: "node.labels.number==1"
+    secrets:
+      - redis_password
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
+    ports:
+      - "8081:8081"
+    networks:
+      - db_net
+    depends_on:
+      - master
+
+networks:
+  db_net:
+    external: true
+
+secrets:
+  redis_password:
+    external: true

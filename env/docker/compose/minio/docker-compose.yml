@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+  minio:
+    image: minio/minio:latest
+    restart: always
+    volumes:
+      - minio_data:/export
+    ports:
+      - "9011:9000"
+    networks:
+      - minio_net
+    environment:
+      MINIO_ACCESS_KEY: youngha
+      MINIO_SECRET_KEY: youngha
+    command: server /export
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  mc:
+    image: minio/mc:latest
+    entrypoint: |
+      sh -c 'sh -s << EOF
+      sleep 10
+      mc config host add minio http://minio:9000 youngha youngha
+      mc mb minio/bucket
+      sleep 10000000
+      EOF'
+    networks:
+      - minio_net
+    depends_on:
+      - minio
+
+networks:
+  minio_net:
+    driver: bridge

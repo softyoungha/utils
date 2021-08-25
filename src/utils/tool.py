@@ -577,6 +577,8 @@ def get_env(var: str, default: str = None, prefix: str = None):
     """
     환경변수 parsing
     """
+    prefix = prefix or ''
+
     return os.getenv(prefix + var) or default
 
 

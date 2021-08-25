@@ -98,6 +98,13 @@ class DbSchema:
     PUBLIC = 'public'
 
 
+"""
+########################################################################################################################
+                                                        About other Connection
+########################################################################################################################
+"""
+
+
 class RedisConn:
     HOST = 'host'
     PORT = 'port'
@@ -121,3 +128,6 @@ class ApiConn:
     ENDPOINT = 'endpoint'
     DEFAULT_HEADERS = 'default_headers'
     DEFAULT_COOKIES = 'default_cookies'
+
+
+

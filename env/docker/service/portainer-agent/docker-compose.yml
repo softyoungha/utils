@@ -1,0 +1,27 @@
+version: '3.7'
+
+services:
+  agent:
+    image: portainer/agent:latest
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+    networks:
+      - agent_network
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - "node.platform.os==linux"
+    ports:
+      - target: 9001
+        published: 9001
+        protocol: tcp
+        mode: host
+
+networks:
+  agent_network:
+    driver: overlay
+    attachable: true

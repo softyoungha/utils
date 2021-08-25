@@ -1,0 +1,84 @@
+version: '3.7'
+
+services:
+  master:
+    image: bitnami/mysql:8.0.25
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.mysql==true
+          - node.labels.number==1
+    ports:
+      - "3306:3306"
+    volumes:
+      - /data/mysql/master:/bitnami/mysql/data
+      - /etc/localtime:/etc/localtime:ro
+    configs:
+      - source: mysql_config
+        target: /opt/bitnami/mysql/conf/my_custom.cnf
+    secrets:
+      - mysql_password
+    environment:
+      - MYSQL_REPLICATION_MODE=master
+      - MYSQL_REPLICATION_USER=repl
+      - MYSQL_REPLICATION_PASSWORD=repl
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_password
+      - MYSQL_USER=youngha
+      - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
+      - MYSQL_DATABASE=backend
+      - MYSQL_CHARACTER_SET=utf8mb4
+      - MYSQL_COLLATE=utf8mb4_general_ci
+      - MYSQL_AUTHENTICATION_PLUGIN=mysql_native_password
+      - TZ=Asia/Seoul
+    networks:
+      - db_net
+
+  slave:
+    image: bitnami/mysql:8.0.25
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.mysql==true
+          - node.labels.number==2
+    ports:
+      - "3307:3306"
+    volumes:
+      - /data/mysql/slave:/bitnami/mysql/data
+      - /etc/localtime:/etc/localtime:ro
+    configs:
+      - source: mysql_config
+        target: /opt/bitnami/mysql/conf/my_custom.cnf
+    secrets:
+      - mysql_password
+    environment:
+      - MYSQL_REPLICATION_MODE=slave
+      - MYSQL_REPLICATION_USER=repl
+      - MYSQL_REPLICATION_PASSWORD=repl
+      - MYSQL_MASTER_HOST=master
+      - MYSQL_MASTER_PORT_NUMBER=3306
+      - MYSQL_MASTER_ROOT_USER=root
+      - MYSQL_MASTER_ROOT_PASSWORD_FILE=/run/secrets/mysql_password
+      - MYSQL_CHARACTER_SET=utf8mb4
+      - MYSQL_COLLATE=utf8mb4_general_ci
+      - MYSQL_AUTHENTICATION_PLUGIN=mysql_native_password
+      - TZ=Asia/Seoul
+    networks:
+      - db_net
+    depends_on:
+      - master
+
+networks:
+  db_net:
+    external: true
+
+secrets:
+  mysql_password:
+    external: true
+
+configs:
+  mysql_config:
+    external: true

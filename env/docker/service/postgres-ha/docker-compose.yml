@@ -1,0 +1,92 @@
+version: '3.7'
+services:
+  master:
+    image: bitnami/postgresql:11-debian-10
+    shm_size: '2gb'
+    user: "1001"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.data==true
+          - node.labels.number==1
+    ports:
+      - "5432:5432"
+    tmpfs:
+      - /tmp/postgres:size=2gb
+    volumes:
+      - /data/postgres/master:/bitnami/postgresql
+      - /etc/localtime:/etc/localtime:ro
+      - type: tmpfs
+        target: /dev/shm
+    configs:
+      - source: postgresql_config
+        target: /bitnami/postgresql/conf/postgresql.conf
+    secrets:
+      - postgresql_password
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=repl
+      - POSTGRESQL_REPLICATION_PASSWORD=repl
+      - POSTGRESQL_POSTGRES_PASSWORD_FILE=/run/secrets/postgresql_password
+      - POSTGRESQL_USERNAME=youngha
+      - POSTGRESQL_PASSWORD_FILE=/run/secrets/postgresql_password
+      - POSTGRESQL_DATABASE=mart
+      - POSTGRESQL_LOG_HOSTNAME=true
+      - POSTGRESQL_SYNCHRONOUS_NOMMIT_NODE=on
+      - POSTGRESQL_NUM_SYNCHRONOUS_REPLICAS=1
+    networks:
+      - db_net
+
+  slave:
+    image: bitnami/postgresql:11-debian-10
+    shm_size: '2gb'
+    user: "1001"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.data==true
+          - node.labels.number==2
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /tmp/postgres:size=2gb
+    volumes:
+      - /data/postgres/slave:/bitnami/postgresql
+      - /etc/localtime:/etc/localtime:ro
+      - type: tmpfs
+        target: /dev/shm
+    configs:
+      - source: postgresql_config
+        target: /bitnami/postgresql/conf/postgresql.conf
+    secrets:
+      - postgresql_password
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl
+      - POSTGRESQL_REPLICATION_PASSWORD=repl
+      - POSTGRESQL_MASTER_HOST=master
+      - POSTGRESQL_POSTGRES_PASSWORD=/run/secrets/postgresql_password
+      - POSTGRESQL_USERNAME=youngha
+      - POSTGRESQL_PASSWORD=/run/secrets/postgresql_password
+      - POSTGRESQL_DATABASE=mars_dm
+      - POSTGRESQL_LOG_HOSTNAME=true
+    networks:
+      - db_net
+    depends_on:
+      - master
+
+networks:
+  db_net:
+    external: true
+
+secrets:
+  postgresql_password:
+    external: true
+
+configs:
+  postgresql_config:
+    external: true

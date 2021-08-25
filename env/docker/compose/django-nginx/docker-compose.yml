@@ -1,0 +1,65 @@
+version: "3.9"
+services:
+  migrate:
+    image: youngha/django:latest
+    environment:
+      - ENV=PRD
+      - DJANGO_SECRET_KEY="ZrMRcEt+!o2lN2qO|F+@~8D^RuuLlY:m+~a+7DZ^bj8K>97n0J"
+      - AWS_ACCESS_KEY=
+      - AWS_SECRET_KEY=
+    volumes:
+      - /home/ec2-user/src/app:/app/src
+    working_dir: /app/src
+    command: >
+      bash -c "python manage.py migrate"
+    networks:
+      - web_net
+
+  django:
+    image: youngha/django:latest
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    environment:
+      - ENV=PRD
+      - DJANGO_SECRET_KEY="ZrMRcEt+!o2lN2qO|F+@~8D^RuuLlY:m+~a+7DZ^bj8K>97n0J"
+      - AWS_ACCESS_KEY=
+      - AWS_SECRET_KEY=
+    volumes:
+      - /home/ec2-user/src/app:/app/src
+    working_dir: /app/src
+    command: bash -c "
+      python manage.py collectstatic --noinput
+      && gunicorn --workers=3 --threads=3 app.wsgi -b 0.0.0.0:8000
+      --access-logfile - --error-logfile -
+      --capture-output --enable-stdio-inheritance --log-level debug
+      "
+    ports:
+      - "8080:8000"
+    networks:
+      - web_net
+
+  nginx:
+    image: nginx:latest
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    volumes:
+      - /home/ec2-user/src/app/.static_root/:/static
+      - /home/ec2-user/src/env/docker/web/nginx.conf:/etc/nginx/nginx.conf
+      - /home/ec2-user/nginx-log:/log
+    environment:
+      # Using environment variables in nginx configuration (new in 1.19) - https://hub.docker.com/_/nginx
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
+    ports:
+      - "80:80"
+    depends_on :
+      - django
+    networks:
+      - web_net
+
+networks:
+  web_net:
+    external: true

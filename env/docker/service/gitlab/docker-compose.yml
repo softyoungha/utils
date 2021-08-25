@@ -1,0 +1,38 @@
+version: '3.7'
+
+services:
+  web:
+    image: gitlab/gitlab-ce:12.2.5-ce.0
+    hostname: "hostname"
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://hostname:9080'
+        gitlab_rails['gitlab_shell_ssh_port'] = 9022
+        gitlab_rails['smtp_enable'] = true
+        gitlab_rails['smtp_address'] = smtp.gmail.com
+        gitlab_rails['smtp_port'] = 587
+        gitlab_rails['smtp_tls'] = false
+        gitlab_rails['smtp_authentication'] = "login"
+        gitlab_rails['smtp_enable_starttls_auto'] = true
+        gitlab_rails['smtp_openssl_verify_mode'] = 'peer'
+        gitlab_rails['gitlab_email_from'] = 'dndnjdnjdnjd@gmail.com'
+        gitlab_rails['gitlab_email_reply_to'] = 'dndnjdnjdnjd@gmail.com'
+      GITLAB_TIMEZONE: "Asia/Seoul"
+    ports:
+      - "9080:9080"
+      - "9443:443"
+      - "9022:22"
+    volumes:
+      - /home/ec2-user/docker/volume/gitlab/config:/etc/gitlab
+      - /home/ec2-user/docker/volume/gitlab/logs:/var/log/gitlab
+      - /home/ec2-user/docker/volume/gitlab/data:/var/opt/gitlab
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        delay: 10s
+        max_attempts: 10
+        window: 60s
+      placement:
+        constraints:
+          - node.labels.monitor==true
