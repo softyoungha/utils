@@ -1,0 +1,10 @@
+minio
+pandas
+sqlalchemy
+redis
+pyspark
+numpy
+dask[complete]
+requests
+psycopg2
+pyspark

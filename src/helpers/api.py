@@ -3,14 +3,18 @@ from typing import Dict, List, Union
 from json import dumps as json_dumps
 
 from utils.config import ApiConn, API_CONFIG
+from dataclasses import dataclass
 
 
+@dataclass
 class Api:
-    def __init__(self, profile_name: str):
-        api_config = API_CONFIG.get(profile_name)
+    profile_name: str
+
+    def __post_init__(self):
+        api_config = API_CONFIG.get(self.profile_name)
 
         if api_config is None:
-            raise KeyError(f"해당 profile_name을 찾을 수 없습니다: {profile_name}")
+            raise KeyError(f"해당 profile_name을 찾을 수 없습니다: {self.profile_name}")
 
         # get url_prefix
         endpoint = api_config.get(ApiConn.ENDPOINT)
@@ -29,15 +33,11 @@ class Api:
         self.session_id = None
 
         # create session
-        self.session = requests.Session()
+        self._session = requests.Session()
 
     @property
     def session(self) -> requests.Session:
         return self._session
-
-    @session.setter
-    def session(self, session: requests.Session):
-        self._session = session
 
     def get(self,
             url: str,

@@ -12,6 +12,7 @@ import os
 from contextlib import contextmanager
 from typing import List, Dict, Tuple
 import atexit
+from dataclasses import dataclass, field
 
 from pyspark.sql import SparkSession
 from pyspark import SparkConf, SparkContext
@@ -42,71 +43,73 @@ def s3_config_as_spark_form(profile_name: str) -> List[Tuple]:
     ]
 
 
+@dataclass
 class SparkContextLoader:
+    app_name: str = 'pysparkApp'
+    job_group_id: str = None
+    description: str = ''
+    master: str = 'local[10]'
+    deploy_mode: str = None
+    spark_port: int = None
+    driver_cores: int = 2
+    driver_memory: str = '4g'
+    executor_cores: int = 2
+    executor_memory: str = '4g'
+    num_executor: int = 0
+    min_executor: int = 6
+    max_executor: int = None
+    queue: str = None
+    spark_config: List[Dict] = None
+    s3_profile_name: str = None
+    hadoop_config: List[Dict] = None
+    dynamic_allocation: bool = True
+
     current_session = None
 
-    def __init__(self,
-                 app_name: str = 'pysparkApp',
-                 job_group_id: str = None,
-                 description: str = '',
-                 master: str = 'local[10]',
-                 deploy_mode: str = None,
-                 spark_port: int = None,
-                 driver_cores: int = 2,
-                 driver_memory: str = '4g',
-                 executor_cores: int = 2,
-                 executor_memory: str = '4g',
-                 num_executor: int = 0,
-                 min_executor: int = 6,
-                 max_executor: int = None,
-                 queue: str = None,
-                 spark_config: List[Dict] = None,
-                 s3_profile_name: str = None,
-                 hadoop_config: List[Dict] = None,
-                 dynamic_allocation: bool = True):
+    def __post_init__(self):
 
         conf = SparkConf() \
-            .setMaster(master) \
-            .setAppName(app_name)
+            .setMaster(self.master) \
+            .setAppName(self.app_name)
 
         # yarn mode
-        if master == 'yarn':
-            if not deploy_mode:
+        if self.master == 'yarn':
+            if not self.deploy_mode:
                 deploy_mode = 'client'
-            os.environ['PYSPARK_SUBMIT_ARGS'] = f'--master yarn --deploy-mode {deploy_mode} pyspark-shell'
+            os.environ['PYSPARK_SUBMIT_ARGS'] = f'--master yarn --deploy-mode {self.deploy_mode} pyspark-shell'
             os.environ['HADOOP_CONF_DIR'] = '/app/bin/hadoop/etc/hadoop'
             os.environ['YARN_CONF_DIR'] = '/app/bin/hadoop/etc/hadoop'
 
         # else
         else:
-            os.environ['PYSPARK_SUBMIT_ARGS'] = f'--master {master} pyspark-shell'
+            os.environ['PYSPARK_SUBMIT_ARGS'] = f'--master {self.master} pyspark-shell'
 
         conf_list = list()
         conf_list.append(('spark.driver.maxResultSize', '2g'))
-        conf_list.append(('spark.driver.cores', driver_cores))
-        conf_list.append(('spark.driver.memory', driver_memory))
-        conf_list.append(('spark.executor.cores', executor_cores))
-        conf_list.append(('spark.executor.memory', executor_memory))
+        conf_list.append(('spark.driver.cores', self.driver_cores))
+        conf_list.append(('spark.driver.memory', self.driver_memory))
+        conf_list.append(('spark.executor.cores', self.executor_cores))
+        conf_list.append(('spark.executor.memory', self.executor_memory))
 
-        if num_executor > 0:
-            conf_list.append(('spark.executor.instances', num_executor))
+        if self.num_executor > 0:
+            conf_list.append(('spark.executor.instances', self.num_executor))
 
-        if deploy_mode:
-            conf_list.append(('spark.submit.deployMode', deploy_mode))
+        if self.deploy_mode:
+            conf_list.append(('spark.submit.deployMode', self.deploy_mode))
 
-        if spark_port:
-            conf_list.append(('spark.ui.port', str(spark_port)))
+        if self.spark_port:
+            conf_list.append(('spark.ui.port', str(self.spark_port)))
 
         conf_list.append(('spark.sql.broadcastTimeout', '3600'))
         conf_list.append(('spark.sql.parquet.writeLegacyFormat', 'true'))
 
-        if dynamic_allocation:
+        if self.dynamic_allocation:
             conf_list.append(('spark.shuffle.service.enabled', 'true'))
             conf_list.append(('spark.dynamicAllocation.enabled', 'true'))
-            conf_list.append(('spark.dynamicAllocation.minExecutors', min_executor))
+            conf_list.append(('spark.dynamicAllocation.minExecutors', self.min_executor))
 
-            if max_executor:
-                conf_list.append(('spark.dynamicAllocation.maxExecutors', max_executor))
+            if self.max_executor:
+                conf_list.append(('spark.dynamicAllocation.maxExecutors', self.max_executor))
 
             # if num_executor > 0:
             #     conf_list.append(('spark.dynamicAllocation.maxExecutors', num_executor))
@@ -114,44 +117,45 @@ class SparkContextLoader:
         else:
             conf_list.append(('spark.dynamicAllocation.enabled', 'false'))
 
-        if queue:
-            conf_list.append(('spark.yarn.queue', queue))
+        if self.queue:
+            conf_list.append(('spark.yarn.queue', self.queue))
 
         conf_list.append(('spark.cleaner.referenceTracking.cleanCheckpoints', 'true'))
 
         conf = conf.setAll(conf_list)
 
         # spark config 추가
-        if spark_config is not None:
-            if isinstance(spark_config, dict):
-                spark_config = list(spark_config.items())
+        if self.spark_config is not None:
+            if isinstance(self.spark_config, dict):
+                spark_config = list(self.spark_config.items())
 
             conf = conf.setAll(spark_config)
 
-        self.spark = SparkSession.builder.config(conf=conf).getOrCreate()
-        self.sc = self.spark.sparkContext
+        self._spark = SparkSession.builder.config(conf=conf).getOrCreate()
+        self._sc = self.spark.sparkContext
 
         # job group id 추가
-        if job_group_id is None:
-            self.job_group_id = app_name
+        if self.job_group_id is None:
+            self.job_group_id = self.app_name
         else:
-            self.job_group_id = job_group_id
+            self.job_group_id = self.job_group_id
 
         self.sc.setJobGroup(groupId=self.job_group_id,
-                            description=description,
+                            description=self.description,
                             interruptOnCancel=True)
 
         # checkpoint directory 추가
         self.sc.setCheckpointDir('/tmp/checkpoints')
 
         # get hadoop_config
+        hadoop_config = self.hadoop_config
         if hadoop_config is not None:
             if isinstance(hadoop_config, dict):
                 hadoop_config = list(hadoop_config.items())
 
         # get s3 bucket profile
-        if s3_profile_name is not None:
-            hadoop_config += s3_config_as_spark_form(s3_profile_name)
+        if self.s3_profile_name is not None:
+            hadoop_config += s3_config_as_spark_form(self.s3_profile_name)
 
         # set hadoop config
         for key, value in hadoop_config:
@@ -168,17 +172,9 @@ class SparkContextLoader:
     def sc(self) -> SparkContext:
         return self._sc
 
-    @sc.setter
-    def sc(self, sc: SparkContext):
-        self._sc = sc
-
     @property
     def spark(self) -> SparkSession:
         return self._spark
-
-    @spark.setter
-    def spark(self, spark: SparkSession):
-        self._spark = spark
 
     def stop_context(self):
         print(f'Stop Spark Session: {self}')

@@ -3,6 +3,7 @@ from io import BytesIO
 import pandas as pd
 import json
 import logging
+from dataclasses import dataclass, field
 
 from minio import Minio
 from utils.config import Default
@@ -10,43 +11,23 @@ from utils.const import FileFormat, ParquetEngine, DType
 from utils.tool import df_to_fileobj
 
 
+@dataclass
 class MinioClient:
-    def __init__(self,
-                 endpoint: str,
-                 access_key: str,
-                 secret_key: str,
-                 secure: bool = False,
-                 bucket_name: str = None):
-        self.endpoint = endpoint
-        self.client = Minio(endpoint=endpoint,
-                            access_key=access_key,
-                            secret_key=secret_key,
-                            secure=secure)
-        self.bucket_name = bucket_name
+    endpoint: str
+    access_key: str = field(repr=False, hash=True)
+    secret_key: str = field(repr=False, hash=True)
+    bucket_name: str = None
+    secure: bool = None
+
+    def __post_init__(self):
+        self._client = Minio(endpoint=self.endpoint,
+                             access_key=self.access_key,
+                             secret_key=self.secret_key,
+                             secure=self.secure)
 
     @property
     def client(self) -> Minio:
         return self._client
-
-    @client.setter
-    def client(self, client: Minio):
-        self._client = client
-
-    @property
-    def endpoint(self) -> str:
-        return self._endpoint
-
-    @endpoint.setter
-    def endpoint(self, endpoint: str):
-        self._endpoint = endpoint
-
-    @property
-    def bucket_name(self) -> str:
-        return self._bucket_name
-
-    @bucket_name.setter
-    def bucket_name(self, bucket_name: str):
-        self._bucket_name = bucket_name
 
     def read_obj(self,
                  file_path: str,
@@ -521,3 +502,7 @@ def upload_json(data: Union[Dict, List], object_name: str):
                     object_name=object_name,
                     file_format=FileFormat.JSON)
     return object_name
+
+
+minio = MinioClient('http://a.b.c.d/', '1', '2', 'hiroong')
+print(minio)

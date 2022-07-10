@@ -8,6 +8,7 @@ from typing import List, Any, Union, Dict
 from io import StringIO, BytesIO
 import pandas as pd
 import json
+from dataclasses import dataclass
 
 from sqlalchemy import Table
 from sqlalchemy.orm import sessionmaker, Session
@@ -21,28 +22,21 @@ from utils.const import *
 from utils.tool import get_secret
 
 
+@dataclass
 class DbObj:
-    def __init__(self, profile_name: str):
-        self.profile_name = profile_name
-        self.base: DeclarativeMeta = declarative_base()
-        self.tables = self.base.metadata.tables
+    profile_name: str
+
+    def __post_init__(self):
+        self._base: DeclarativeMeta = declarative_base()
         self.engine = None
-
-    @property
-    def profile_name(self):
-        return self._profile_name
-
-    @profile_name.setter
-    def profile_name(self, profile_name):
-        self._profile_name = profile_name
 
     @property
     def base(self) -> DeclarativeMeta:
         return self._base
 
-    @base.setter
-    def base(self, base: DeclarativeMeta):
-        self._base = base
+    @property
+    def table(self):
+        return self.base.metadata.tables
 
     @property
     def db_config(self) -> dict:
