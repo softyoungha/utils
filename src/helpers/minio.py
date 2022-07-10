@@ -14,8 +14,8 @@ from utils.tool import df_to_fileobj
 @dataclass
 class MinioClient:
     endpoint: str
-    access_key: str = field(repr=False, hash=True)
-    secret_key: str = field(repr=False, hash=True)
+    access_key: str = field(repr=False)
+    secret_key: str = field(repr=False)
     bucket_name: str = None
     secure: bool = None
 
@@ -24,6 +24,7 @@ class MinioClient:
                              access_key=self.access_key,
                              secret_key=self.secret_key,
                              secure=self.secure)
+        del self.access_key, self.secret_key
 
     @property
     def client(self) -> Minio:
@@ -504,5 +505,5 @@ def upload_json(data: Union[Dict, List], object_name: str):
     return object_name
 
 
-minio = MinioClient('http://a.b.c.d/', '1', '2', 'hiroong')
-print(minio)
+m = MinioClient('http://a.b.c.d/', '1', '2', 'hiroong')
+print(m)
